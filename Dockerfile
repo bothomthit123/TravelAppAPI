@@ -7,11 +7,11 @@ EXPOSE 80
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["TravelApp/TravelApp.csproj", "TravelApp/"]
-RUN dotnet restore "TravelApp/TravelApp.csproj"
+COPY ["TravelApp.csproj", "./"]
+RUN dotnet restore "./TravelApp.csproj"
 COPY . .
-WORKDIR "/src/TravelApp"
-RUN dotnet build "TravelApp.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./TravelApp.csproj" -c Release -o /app/build
+
 
 # Publish image
 FROM build AS publish
