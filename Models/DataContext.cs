@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SmartTravelAPI.Models;
 
 public class DataContext : DbContext
@@ -8,7 +8,7 @@ public class DataContext : DbContext
     public DbSet<Account> Accounts { get; set; }
     public DbSet<Place> Places { get; set; } // ⬅️ GIỮ LẠI
     public DbSet<Favorite> Favorite { get; set; }
-    public DbSet<SearchHistory> SearchHistories { get; set; }
+    public DbSet<SearchHistory> SearchHistory { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
