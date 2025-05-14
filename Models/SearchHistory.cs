@@ -13,8 +13,7 @@ namespace SmartTravelAPI.Models
         public string SearchQuery { get; set; }
 
         public DateTime SearchedAt { get; set; }
-
-     
-        public Account Account { get; set; }
+[JsonIgnore]
+public Account Account { get; set; }
     }
 }
