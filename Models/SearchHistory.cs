@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace SmartTravelAPI.Models
 {
@@ -13,7 +14,7 @@ namespace SmartTravelAPI.Models
         public string SearchQuery { get; set; }
 
         public DateTime SearchedAt { get; set; }
-[JsonIgnore]
-public Account Account { get; set; }
+        [JsonIgnore]
+        public Account Account { get; set; }
     }
 }
