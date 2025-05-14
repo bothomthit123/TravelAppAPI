@@ -17,15 +17,15 @@ namespace TravelApp.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<SearchHistory>>> GetSearchHistories()
+        public async Task<ActionResult<IEnumerable<SearchHistory>>> GetSearchHistory()
         {
-            return await _context.SearchHistories.ToListAsync();
+            return await _context.SearchHistory.ToListAsync();
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<SearchHistory>> GetSearchHistory(int id)
         {
-            var search = await _context.SearchHistories.FindAsync(id);
+            var search = await _context.SearchHistory.FindAsync(id);
 
             if (search == null)
                 return NotFound();
@@ -36,7 +36,7 @@ namespace TravelApp.Controllers
         [HttpPost]
         public async Task<ActionResult<SearchHistory>> PostSearchHistory(SearchHistory search)
         {
-            _context.SearchHistories.Add(search);
+            _context.SearchHistory.Add(search);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetSearchHistory), new { id = search.SearchId }, search);
@@ -68,11 +68,11 @@ namespace TravelApp.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSearchHistory(int id)
         {
-            var search = await _context.SearchHistories.FindAsync(id);
+            var search = await _context.SearchHistory.FindAsync(id);
             if (search == null)
                 return NotFound();
 
-            _context.SearchHistories.Remove(search);
+            _context.SearchHistory.Remove(search);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -80,7 +80,7 @@ namespace TravelApp.Controllers
 
         private bool SearchHistoryExists(int id)
         {
-            return _context.SearchHistories.Any(e => e.SearchId == id);
+            return _context.SearchHistory.Any(e => e.SearchId == id);
         }
     }
 }
