@@ -8,6 +8,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Globalization;
+using static DataExporter;
+using System.Text.Json;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -16,12 +18,32 @@ public class RecommendationController : ControllerBase
     private readonly DataContext _context;
     private readonly ILogger<RecommendationController> _logger;
 
-
     public RecommendationController(DataContext context, ILogger<RecommendationController> logger)
     {
         _context = context;
         _logger = logger;
     }
+
+    [HttpPost("train-model")]
+    public IActionResult TrainModel()
+    {
+        try
+        {
+            var exporter = new DataExporter();
+            string csvPath = "recommendation_data.csv";
+            string modelPath = "place_model.zip";
+
+            exporter.TrainModel(csvPath, modelPath);
+
+            return Ok("✅ Mô hình đã được huấn luyện và lưu thành công.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Lỗi khi huấn luyện mô hình.");
+            return StatusCode(500, "Lỗi khi huấn luyện mô hình: " + ex.Message);
+        }
+    }
+
     [HttpGet("export-training-data")]
     public async Task<IActionResult> ExportTrainingData()
     {
@@ -30,6 +52,7 @@ public class RecommendationController : ControllerBase
 
         return Ok("File training data đã được xuất.");
     }
+
     [HttpPost("suggest")]
     public async Task<ActionResult<IEnumerable<RecommendedPlaceDto>>> RecommendPlaces([FromBody] RecommendationRequest request)
     {
@@ -68,8 +91,6 @@ public class RecommendationController : ControllerBase
         string url = $"https://api.foursquare.com/v3/places/search?ll={latStr},{lonStr}&limit=50";
 
         var response = await httpClient.GetAsync(url);
-
-
         if (!response.IsSuccessStatusCode)
         {
             var errContent = await response.Content.ReadAsStringAsync();
@@ -78,54 +99,70 @@ public class RecommendationController : ControllerBase
         }
 
         var content = await response.Content.ReadAsStringAsync();
-        _logger.LogInformation("Foursquare response: {Content}", content);
-
-        // TODO: Parse and return results
-
-
-        if (!response.IsSuccessStatusCode)
-            return StatusCode((int)response.StatusCode, "Failed to fetch places from Foursquare");
-
         var foursquarePlaces = ParseFoursquarePlaces(content);
 
+        var exporter = new DataExporter();
         var recommendedPlaces = foursquarePlaces
-            .Select(p => new
+            .Select(p =>
             {
-                p.PlaceId,
-                p.Name,
-                p.Address,
-                p.Category,
-                Latitude = p.Latitude,
-                Longitude = p.Longitude,
-                Distance = GetDistance(request.Latitude, request.Longitude, p.Latitude, p.Longitude),
-                KeywordScore = searchKeywords.Any(k => !string.IsNullOrEmpty(p.Name) && p.Name.ToLowerInvariant().Contains(k)) ? 1 : 0,
-                CategoryScore = !string.IsNullOrEmpty(p.Category) && favoriteCategories.Contains(p.Category.ToLowerInvariant()) ? 1 : 0
+                var input = new PlaceData
+                {
+                    Latitude = (float)p.Latitude,
+                    Longitude = (float)p.Longitude,
+                    Category = p.Category ?? "unknown",
+                    Rating = 5.0f // giả định nếu không có
+                };
+
+                var predictedScore = exporter.PredictScore(input);
+
+                var distance = GetDistance(request.Latitude, request.Longitude, p.Latitude, p.Longitude);
+                var keywordScore = searchKeywords.Any(k => !string.IsNullOrEmpty(p.Name) && p.Name.ToLowerInvariant().Contains(k)) ? 1 : 0;
+                var categoryScore = !string.IsNullOrEmpty(p.Category) && favoriteCategories.Contains(p.Category.ToLowerInvariant()) ? 1 : 0;
+
+                return new RecommendedPlaceDto
+                {
+                    PlaceId = p.PlaceId,
+                    Name = p.Name,
+                    Address = p.Address,
+                    Category = p.Category,
+                    Latitude = p.Latitude,
+                    Longitude = p.Longitude,
+                    Score = Math.Round(predictedScore + keywordScore + categoryScore - distance / 10.0, 2)
+                };
             })
-            .OrderBy(p => p.Distance)
-            .ThenByDescending(p => p.KeywordScore + p.CategoryScore)
+            .OrderByDescending(p => p.Score)
             .Take(10)
-            .Select(p => new RecommendedPlaceDto
-            {
-                PlaceId = p.PlaceId,
-                Name = p.Name,
-                Address = p.Address,
-                Category = p.Category,
-                Latitude = p.Latitude,
-                Longitude = p.Longitude,
-                Score = Math.Round(1.0 / (1.0 + p.Distance) + p.KeywordScore + p.CategoryScore, 2)
-            })
             .ToList();
 
         _logger.LogInformation("Recommendation finished, returning {Count} places.", recommendedPlaces.Count);
-
         return Ok(recommendedPlaces);
     }
 
-    // TODO: Implement real parsing logic using Newtonsoft.Json or System.Text.Json
     private List<Place> ParseFoursquarePlaces(string jsonContent)
     {
-        // TODO: Parse real JSON from Foursquare
-        return new List<Place>();
+        var results = new List<Place>();
+        using var jsonDoc = JsonDocument.Parse(jsonContent);
+        var root = jsonDoc.RootElement;
+        var resultsArray = root.GetProperty("results");
+
+        int idCounter = 1;
+        foreach (var item in resultsArray.EnumerateArray())
+        {
+            var location = item.GetProperty("geocodes").GetProperty("main");
+            var address = item.TryGetProperty("location", out var loc) && loc.TryGetProperty("formatted_address", out var addr) ? addr.GetString() : "";
+
+            results.Add(new Place
+            {
+                PlaceId = idCounter++,
+                Name = item.GetProperty("name").GetString(),
+                Address = address,
+                Category = item.TryGetProperty("categories", out var cats) && cats.GetArrayLength() > 0 ? cats[0].GetProperty("name").GetString() : "other",
+                Latitude = location.GetProperty("latitude").GetDouble(),
+                Longitude = location.GetProperty("longitude").GetDouble()
+            });
+        }
+
+        return results;
     }
 
     public class Place
@@ -151,5 +188,4 @@ public class RecommendationController : ControllerBase
     }
 
     private double ToRadians(double angle) => angle * Math.PI / 180;
-
 }
