@@ -1,0 +1,18 @@
+AccountId,Latitude,Longitude,Category,Rating,Label
+1,10.762622,106.66017,Restaurant,4.5,True
+1,37.420147,-122.072716,Corporate Coffee Shop,5,True
+1,37.414375,-122.07726,Café,5,True
+1,37.414684,-122.10004,Spa,5,True
+1,37.414684,-122.10004,Spa,5,True
+1,37.41697,-122.09522,Park,5,True
+1,37.420147,-122.072716,Corporate Coffee Shop,5,True
+1,10.766125,106.663956,Coffee Shop,5,False
+1,10.755386,106.66507,Hospital,5,False
+1,10.753354,106.66118,Temple,5,False
+1,10.754333,106.666374,Diner,5,False
+1,10.769688,106.65156,Vietnamese Restaurant,5,False
+1,10.751563,106.66499,Dessert Shop,5,False
+1,10.7709,106.66976,Movie Theater,5,False
+1,10.753741,106.66971,Coffee Shop,5,False
+1,10.755308,106.67352,Vietnamese Restaurant,5,False
+1,10.747433,106.661514,Vietnamese Restaurant,5,False
