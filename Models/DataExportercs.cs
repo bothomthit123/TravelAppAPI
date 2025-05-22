@@ -16,7 +16,7 @@ using System.Net.Http.Headers;
 
 public class DataExporter
 {
-    private readonly string _connectionString = "Data Source=LAP-CUA-BOTHOMT\\NEWBOSERVER;Initial Catalog=SmartTravelApp;Integrated Security=True;TrustServerCertificate=True;";
+    private readonly string _connectionString = "Data Source=SQL1003.site4now.net;Initial Catalog=db_ab8497_travelapp;User Id=db_ab8497_travelapp_admin;Password=Nhuquynh257";
     private readonly string _foursquareApiKey = "fsq3QCKaYXsYv/Ta0q9yvtlrIeb247rV7u6EtcMGX/oIEds=";
     private static PredictionEngine<PlaceData, PlacePrediction> CreatePredictionEngine(string modelPath)
     {
@@ -34,7 +34,10 @@ public class DataExporter
     // Định nghĩa lớp PlaceData và PlacePrediction trong DataExporter
     public class PlaceData
     {
-        [LoadColumn(1)] // Cột Latitude trong CSV (cột thứ 2, index bắt đầu từ 0)
+        [LoadColumn(0)]
+        public int AccountId { get; set; }
+
+        [LoadColumn(1)]
         public float Latitude { get; set; }
 
         [LoadColumn(2)]
@@ -47,8 +50,18 @@ public class DataExporter
         public float Rating { get; set; }
 
         [LoadColumn(5)]
+        public float IsFavorite { get; set; }
+
+        [LoadColumn(6)]
+        public float SearchMatch { get; set; }
+
+        [LoadColumn(7)]
+        public float CategoryMatch { get; set; }
+
+        [LoadColumn(8)]
         public bool Label { get; set; }
     }
+
 
     public class PlacePrediction
     {
@@ -66,63 +79,97 @@ public class DataExporter
         public string Category { get; set; }
         public float Rating { get; set; }
         public bool Label { get; set; }
+        public float IsFavorite { get; set; }        // 1 nếu user yêu thích
+        public float SearchMatch { get; set; }       // 1 nếu tên địa điểm trùng với lịch sử tìm kiếm
+        public float CategoryMatch { get; set; }     // 1 nếu category thuộc danh sách yêu thích
+
     }
 
 
     public async Task ExportTrainingDataAsync(string outputCsvPath)
     {
-        var data = new List<TrainingData>();
+        var allData = new List<PlaceData>();
 
-        // 1. Lấy dữ liệu yêu thích (Label = 1)
-        using (var conn = new SqlConnection(_connectionString))
+        using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync();
+
+        // 1. Lấy tất cả AccountId có dữ liệu
+        var accounts = new List<int>();
+        var cmdAcc = new SqlCommand("SELECT DISTINCT AccountId FROM Favorite", conn);
+        using var readerAcc = await cmdAcc.ExecuteReaderAsync();
+        while (await readerAcc.ReadAsync())
         {
-            await conn.OpenAsync();
-            var cmd = new SqlCommand("SELECT AccountId, Latitude, Longitude, Category, Rating FROM Favorite WHERE Latitude IS NOT NULL AND Longitude IS NOT NULL", conn);
-            using var reader = await cmd.ExecuteReaderAsync();
+            accounts.Add(readerAcc.GetInt32(0));
+        }
+        readerAcc.Close();
 
-            while (await reader.ReadAsync())
+        foreach (var accId in accounts)
+        {
+            // Favorite = Label = 1
+            var favs = new List<PlaceData>();
+            var cmdFav = new SqlCommand("SELECT Latitude, Longitude, Category, Rating FROM Favorite WHERE AccountId = @acc", conn);
+            cmdFav.Parameters.AddWithValue("@acc", accId);
+            using var readerFav = await cmdFav.ExecuteReaderAsync();
+            while (await readerFav.ReadAsync())
             {
-                data.Add(new TrainingData
+                favs.Add(new PlaceData
                 {
-                    AccountId = reader.GetInt32(0),
-                    Latitude = (float)reader.GetDouble(1),
-                    Longitude = (float)reader.GetDouble(2),
-                    Category = reader.IsDBNull(3) ? "Unknown" : reader.GetString(3),
-                    Rating = reader.IsDBNull(4) ? 0 : (float)reader.GetDouble(4),
+                    AccountId = accId,
+                    Latitude = (float)readerFav.GetDouble(0),
+                    Longitude = (float)readerFav.GetDouble(1),
+                    Category = readerFav.IsDBNull(2) ? "Unknown" : readerFav.GetString(2),
+                    Rating = readerFav.IsDBNull(3) ? 0 : (float)readerFav.GetDouble(3),
+                    IsFavorite = 1,
+                    SearchMatch = 0,
+                    CategoryMatch = 1,
                     Label = true
                 });
             }
-        }
+            readerFav.Close();
 
-        // 2. Lấy ngẫu nhiên các địa điểm từ Foursquare (Label = 0)
-        foreach (var group in data.GroupBy(d => d.AccountId))
-        {
-            var lat = group.First().Latitude;
-            var lon = group.First().Longitude;
-
-            var notFavPlaces = await GetFoursquarePlacesAsync(lat, lon, excludeCategories: group.Select(x => x.Category).ToList());
-
-            foreach (var place in notFavPlaces)
+            // Từ khóa đã tìm
+            var keywords = new List<string>();
+            var cmdSearch = new SqlCommand("SELECT DISTINCT SearchQuery FROM SearchHistory WHERE AccountId = @acc", conn);
+            cmdSearch.Parameters.AddWithValue("@acc", accId);
+            using var readerSearch = await cmdSearch.ExecuteReaderAsync();
+            while (await readerSearch.ReadAsync())
             {
-                data.Add(new TrainingData
+                keywords.Add(readerSearch.GetString(0).ToLower());
+            }
+            readerSearch.Close();
+
+            // Tạo danh sách không yêu thích từ Foursquare
+            var notFavs = await GetFoursquarePlacesAsync(favs.First().Latitude, favs.First().Longitude, favs.Select(x => x.Category).ToList());
+
+            foreach (var nf in notFavs)
+            {
+                var searchMatch = keywords.Any(k => nf.category.ToLower().Contains(k)) ? 1f : 0f;
+                var categoryMatch = favs.Any(f => f.Category == nf.category) ? 1f : 0f;
+
+                allData.Add(new PlaceData
                 {
-                    AccountId = group.Key,
-                    Latitude = (float)place.lat,
-                    Longitude = (float)place.lon,
-                    Category = place.category,
-                    Rating = place.rating,
+                    AccountId = accId,
+                    Latitude = (float)nf.lat,
+                    Longitude = (float)nf.lon,
+                    Category = nf.category,
+                    Rating = nf.rating,
+                    IsFavorite = 0,
+                    SearchMatch = searchMatch,
+                    CategoryMatch = categoryMatch,
                     Label = false
                 });
             }
+
+            allData.AddRange(favs);
         }
 
-        // 3. Ghi ra file CSV
+        // Xuất file CSV
         using var writer = new StreamWriter(outputCsvPath);
-        using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
-        csv.WriteRecords(data);
-
-        Console.WriteLine($"✅ Exported {data.Count} records to {outputCsvPath}");
+        using var csv = new CsvHelper.CsvWriter(writer, CultureInfo.InvariantCulture);
+        csv.WriteRecords(allData);
+        Console.WriteLine($"✅ Exported {allData.Count} rows to {outputCsvPath}");
     }
+
 
     private async Task<List<(double lat, double lon, string category, float rating)>> GetFoursquarePlacesAsync(
    double latitude, double longitude, List<string> excludeCategories)
@@ -193,9 +240,12 @@ public class DataExporter
         // 3. Pipeline xử lý dữ liệu và huấn luyện mô hình
         var pipeline = mlContext.Transforms.Conversion.MapValueToKey("Category")
     .Append(mlContext.Transforms.Categorical.OneHotEncoding("CategoryEncoded", "Category")) // one-hot encode category
-    .Append(mlContext.Transforms.Concatenate("Features", "Latitude", "Longitude", "Rating", "CategoryEncoded"))
+    .Append(mlContext.Transforms.Concatenate("Features",
+    "Latitude", "Longitude", "Rating", "CategoryEncoded",
+    "IsFavorite", "SearchMatch", "CategoryMatch"))
     .Append(mlContext.Transforms.NormalizeMinMax("Features"))
     .Append(mlContext.BinaryClassification.Trainers.SdcaLogisticRegression(labelColumnName: "Label", featureColumnName: "Features"));
+
 
 
         // 4. Huấn luyện
