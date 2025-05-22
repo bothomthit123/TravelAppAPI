@@ -25,5 +25,10 @@
   <PackageReference Include="Microsoft.ML" Version="3.0.1" />
   <PackageReference Include="Microsoft.ML.DataView" Version="3.0.1" />
 </ItemGroup>
+<ItemGroup>
+  <None Update="place_model.zip">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+</ItemGroup>
 
 </Project>
