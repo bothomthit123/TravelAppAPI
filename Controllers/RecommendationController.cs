@@ -110,7 +110,10 @@ public class RecommendationController : ControllerBase
                     Latitude = (float)p.Latitude,
                     Longitude = (float)p.Longitude,
                     Category = p.Category ?? "unknown",
-                    Rating = 5.0f // giả định nếu không có
+                    Rating = 5.0f,  // giả định nếu không có
+                    IsFavorite = _context.Favorite.Any(f => f.AccountId == request.AccountId && f.Name == p.Name) ? 1f : 0f,
+                    SearchMatch = searchKeywords.Any(k => !string.IsNullOrEmpty(p.Name) && p.Name.ToLowerInvariant().Contains(k)) ? 1f : 0f,
+                    CategoryMatch = favoriteCategories.Contains(p.Category.ToLowerInvariant()) ? 1f : 0f
                 };
 
                 var predictedScore = exporter.PredictScore(input);
@@ -173,6 +176,9 @@ public class RecommendationController : ControllerBase
         public string Category { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
+        public float IsFavorite { get; set; }        // 1 nếu user yêu thích
+        public float SearchMatch { get; set; }       // 1 nếu tên địa điểm trùng với lịch sử tìm kiếm
+        public float CategoryMatch { get; set; }
     }
 
     private double GetDistance(double lat1, double lon1, double lat2, double lon2)
