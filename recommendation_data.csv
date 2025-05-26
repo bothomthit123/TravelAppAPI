@@ -1,11 +1,12 @@
 AccountId,Latitude,Longitude,Category,Rating,IsFavorite,SearchMatch,CategoryMatch,Label
+1,10.758086,106.65274,Chinese Restaurant,5,0,0,0,False
 1,10.755386,106.66507,Hospital,5,0,0,0,False
 1,10.753354,106.66118,Temple,5,0,0,0,False
 1,10.769688,106.65156,Vietnamese Restaurant,5,0,0,0,False
 1,10.751563,106.66499,Dessert Shop,5,0,0,0,False
 1,10.7709,106.66976,Movie Theater,5,0,0,0,False
 1,10.755308,106.67352,Vietnamese Restaurant,5,0,0,0,False
-1,10.747433,106.661514,Vietnamese Restaurant,5,0,0,0,False
+1,10.764682,106.67826,Flower Store,5,0,0,0,False
 1,10.762622,106.66017,Restaurant,4.5,1,0,1,True
 1,37.420147,-122.072716,Corporate Coffee Shop,5,1,0,1,True
 1,37.414375,-122.07726,Café,5,1,0,1,True
@@ -31,21 +32,31 @@ AccountId,Latitude,Longitude,Category,Rating,IsFavorite,SearchMatch,CategoryMatc
 3,10.792694,106.645935,Vietnamese Restaurant,5,0,0,0,False
 3,10.798726,106.642204,Diner,5,0,0,0,False
 3,10.800715,106.64337,Japanese Restaurant,5,0,0,0,False
-3,10.797123,106.649216,Noodle Restaurant,5,0,0,0,False
 3,10.802279,106.64323,Sporting Goods Retail,5,0,0,0,False
 3,10.792396,106.631874,Warehouse or Wholesale Store,5,0,0,0,False
 3,10.785405,106.64157,Vietnamese Restaurant,5,0,0,0,False
 3,10.792401,106.64196,Bakery,5,1,0,1,True
 3,10.795228,106.64546,Bakery,5,1,0,1,True
-3,10.791534,106.64489,Café,5,1,0,1,True
-3,10.792224,106.64253,Café,5,1,0,1,True
-3,10.797288,106.641426,Café,5,1,0,1,True
 3,10.795312,106.6399,Asian Restaurant,5,1,0,1,True
 3,10.79761,106.63908,Food Truck,5,1,0,1,True
 3,10.806709,106.63435,Shopping Mall,5,1,0,1,True
-3,10.800582,106.658966,Retail,5,1,0,1,True
-3,10.79776,106.63312,Không rõ loại,5,1,0,1,True
 3,10.791272,106.643745,Hotpot Restaurant,5,1,0,1,True
-3,10.794974,106.64119,Event Space,5,1,0,1,True
 3,10.795904,106.64573,Ice Cream Parlor,5,1,0,1,True
 3,10.794932,106.64255,Ice Cream Parlor,5,1,0,1,True
+3,10.796512,106.63969,Không rõ loại,5,1,0,1,True
+3,10.794336,106.64491,Food Court,5,1,0,1,True
+3,10.79614,106.64549,Noodle Restaurant,5,1,0,1,True
+3,10.791026,106.63694,Dining and Drinking,5,1,0,1,True
+3,10.790068,106.634964,Dining and Drinking,5,1,0,1,True
+41,10.776151,106.67196,History Museum,5,0,0,0,False
+41,10.7709,106.66976,Movie Theater,5,0,0,0,False
+41,10.771261,106.67285,Vegan and Vegetarian Restaurant,5,0,0,0,False
+41,10.794449,106.66941,Diner,5,0,0,0,False
+41,10.795406,106.67248,Diner,5,0,0,0,False
+41,10.795833,106.67528,Chinese Restaurant,5,0,0,0,False
+41,10.790516,106.68274,Restaurant,5,0,0,0,False
+41,10.796581,106.67349,Diner,5,0,0,0,False
+41,10.79219,106.682,Vietnamese Restaurant,5,0,0,0,False
+41,10.782754,106.671074,Fish Market,5,1,0,1,True
+41,10.776209,106.67201,Không rõ loại,5,1,0,1,True
+41,10.78127,106.66193,Coffee Shop,5,1,0,1,True
