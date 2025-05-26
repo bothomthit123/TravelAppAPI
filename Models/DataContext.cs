@@ -6,7 +6,7 @@ public class DataContext : DbContext
     public DataContext(DbContextOptions<DataContext> options) : base(options) { }
 
     public DbSet<Account> Accounts { get; set; }
-    public DbSet<Place> Places { get; set; } // ⬅️ GIỮ LẠI
+    public DbSet<Place> Place { get; set; } // ⬅️ GIỮ LẠI
     public DbSet<Favorite> Favorite { get; set; }
     public DbSet<SearchHistory> SearchHistory { get; set; }
 
