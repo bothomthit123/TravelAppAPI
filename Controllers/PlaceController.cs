@@ -19,13 +19,13 @@ namespace TravelApp.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Place>>> GetPlaces()
         {
-            return await _context.Places.ToListAsync();
+            return await _context.Place.ToListAsync();
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Place>> GetPlace(int id)
         {
-            var place = await _context.Places.FindAsync(id);
+            var place = await _context.Place.FindAsync(id);
 
             if (place == null)
                 return NotFound();
@@ -36,7 +36,7 @@ namespace TravelApp.Controllers
         [HttpPost]
         public async Task<ActionResult<Place>> PostPlace(Place place)
         {
-            _context.Places.Add(place);
+            _context.Place.Add(place);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetPlace), new { id = place.PlaceId }, place);
@@ -68,11 +68,11 @@ namespace TravelApp.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePlace(int id)
         {
-            var place = await _context.Places.FindAsync(id);
+            var place = await _context.Place.FindAsync(id);
             if (place == null)
                 return NotFound();
 
-            _context.Places.Remove(place);
+            _context.Place.Remove(place);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -80,7 +80,7 @@ namespace TravelApp.Controllers
 
         private bool PlaceExists(int id)
         {
-            return _context.Places.Any(e => e.PlaceId == id);
+            return _context.Place.Any(e => e.PlaceId == id);
         }
     }
 }
