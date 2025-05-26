@@ -6,7 +6,7 @@ public class DataContext : DbContext
     public DataContext(DbContextOptions<DataContext> options) : base(options) { }
 
     public DbSet<Account> Accounts { get; set; }
-    public DbSet<Place> Place { get; set; } // ⬅️ GIỮ LẠI
+    public DbSet<Place> Place { get; set; } 
     public DbSet<Favorite> Favorite { get; set; }
     public DbSet<SearchHistory> SearchHistory { get; set; }
 
@@ -19,12 +19,6 @@ public class DataContext : DbContext
 
         modelBuilder.Entity<Favorite>();
             
-            
-            
-
-        // 🚫 Favorite bây giờ không cần quan hệ với Place nữa, nên KHÔNG có .HasOne(f => f.Place)
-        // modelBuilder.Entity<Favorite>().HasOne...
-
         modelBuilder.Entity<SearchHistory>()
             .HasOne(s => s.Account)
             .WithMany(a => a.SearchHistories)
